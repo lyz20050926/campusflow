@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { usePlanner } from "@/components/PlannerContext";
-import { buildAssistantContext } from "@/lib/assistant";
+import {
+  buildAssistantContext,
+  buildOfflineAssistantReply,
+} from "@/lib/assistant";
 import { COURSES, REQUIREMENTS, SEMESTERS } from "@/lib/catalog";
 
 interface Message {
   role: "user" | "assistant";
   text: string;
-  mock?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -23,45 +25,27 @@ export default function AssistantPage() {
   const { completed, plan, career, ready } = usePlanner();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   if (!ready) return null;
 
-  async function ask(question: string) {
-    if (!question.trim() || loading) return;
+  function ask(question: string) {
+    if (!question.trim()) return;
     setMessages((m) => [...m, { role: "user", text: question }]);
     setInput("");
-    setLoading(true);
-    try {
-      const context = buildAssistantContext(
-        completed,
-        plan,
-        SEMESTERS,
-        career,
-        COURSES,
-        REQUIREMENTS
-      );
-      const res = await fetch("/api/assistant", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question, context }),
-      });
-      const data = await res.json();
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          text: data.reply ?? data.error ?? "Something went wrong.",
-          mock: data.mock,
-        },
-      ]);
-    } catch {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", text: "Could not reach the assistant API." },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+    const context = buildAssistantContext(
+      completed,
+      plan,
+      SEMESTERS,
+      career,
+      COURSES,
+      REQUIREMENTS
+    );
+    setMessages((m) => [
+      ...m,
+      {
+        role: "assistant",
+        text: buildOfflineAssistantReply(question, context),
+      },
+    ]);
   }
 
   return (
@@ -69,9 +53,8 @@ export default function AssistantPage() {
       <div>
         <h1 className="text-2xl font-bold">AI Assistant</h1>
         <p className="text-sm text-slate-500">
-          The assistant explains results from the rule engine. It never
-          calculates prerequisites, conflicts, or AU totals itself. Without an
-          API key it runs in mock mode.
+          The assistant explains results from the rule engine. It runs entirely
+          in your browser, so your study-plan data never leaves your device.
         </p>
       </div>
 
@@ -103,14 +86,13 @@ export default function AssistantPage() {
             }`}
           >
             {m.text}
-            {m.mock && (
+            {m.role === "assistant" && (
               <div className="mt-1 text-xs opacity-60">
-                Mock response — set ANTHROPIC_API_KEY for real AI answers.
+                Offline response — generated in your browser.
               </div>
             )}
           </div>
         ))}
-        {loading && <p className="text-sm text-slate-400">Thinking…</p>}
       </div>
 
       <form
@@ -128,7 +110,7 @@ export default function AssistantPage() {
         />
         <button
           type="submit"
-          disabled={loading || !input.trim()}
+          disabled={!input.trim()}
           className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
         >
           Send

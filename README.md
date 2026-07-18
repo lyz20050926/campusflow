@@ -10,16 +10,16 @@ A lightweight, AI-assisted course planning tool for university students. Built a
 - **Semester Planner** — plan four future semesters (Year 2–3), add/remove/move courses, and see per-semester AU totals.
 - **Rule Validation** — a deterministic rule engine checks prerequisites, semester availability, the 21 AU semester limit, timetable conflicts, and duplicates. Warnings appear directly beside invalid courses.
 - **Recommendations** — transparent rule-based scoring (+3 career match, +2 incomplete requirement, +1 offered next semester, −5 missing prerequisite) ranks the top five courses with reasons.
-- **AI Assistant** — explains rule-engine results and answers planning questions. The LLM only receives structured data computed by the application; it never calculates prerequisites, conflicts, or AU totals. Without an API key the assistant runs in a fully offline mock mode.
+- **Planning Assistant** — explains rule-engine results and answers planning questions entirely in the browser. Study-plan data never leaves the user's device.
 
 All user data is stored in browser `localStorage` — no accounts, no server-side state.
 
 ## Tech Stack
 
-- [Next.js 14](https://nextjs.org/) (App Router) + TypeScript
+- [Next.js 15](https://nextjs.org/) (App Router) + TypeScript
 - Tailwind CSS
 - Vitest for unit tests
-- Anthropic Messages API (optional, for the assistant)
+- Fully client-side offline planning assistant
 
 All planning logic lives in plain TypeScript modules (`lib/`), fully separated from UI components — the "Simpler Option" backend from the project spec (Next.js only, no separate Python service).
 
@@ -29,15 +29,6 @@ All planning logic lives in plain TypeScript modules (`lib/`), fully separated f
 npm install
 npm run dev        # http://localhost:3000
 ```
-
-### Optional: enable the real AI assistant
-
-```bash
-cp .env.example .env
-# then set ANTHROPIC_API_KEY in .env
-```
-
-Without a key, the assistant answers with deterministic mock responses built from the same rule-engine data, so the whole app works offline.
 
 ### Run tests
 
@@ -61,8 +52,7 @@ campusflow/
 │   ├── completed/        # Completed-course tracker
 │   ├── planner/          # Semester planner
 │   ├── recommendations/  # Rule-based recommendations
-│   ├── assistant/        # AI assistant chat panel
-│   └── api/assistant/    # LLM proxy with mock fallback
+│   └── assistant/        # Offline planning-assistant panel
 ├── components/           # UI components + localStorage-backed state
 ├── lib/
 │   ├── catalog.ts        # Course catalogue and programme constants
@@ -101,7 +91,7 @@ The catalogue includes deliberate edge cases, e.g. CS2101 and EE3201 both meet M
 
 ## Deployment
 
-The app is a standard Next.js project and deploys to [Vercel](https://vercel.com/) with zero configuration: import the repo, optionally set `ANTHROPIC_API_KEY`, and deploy.
+The live app is published at [lyz20050926.github.io/campusflow](https://lyz20050926.github.io/campusflow/). Every push to `main` runs the test suite, creates a static Next.js export, and deploys it with GitHub Actions.
 
 ## Roadmap
 
