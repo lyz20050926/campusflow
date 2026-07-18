@@ -1,0 +1,12 @@
+{
+  "programme_name": "Bachelor of Engineering in Computer Engineering (Fictional)",
+  "total_required_au": 72,
+  "max_au_per_semester": 21,
+  "requirements": {
+    "core": 30,
+    "major_elective": 15,
+    "general_elective": 9,
+    "mathematics": 12,
+    "laboratory": 6
+  }
+}
